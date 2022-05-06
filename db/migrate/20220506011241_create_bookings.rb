@@ -1,6 +1,6 @@
-class CreateBookings < ActiveRecord::Migration[6.1]
+class CreateReservations < ActiveRecord::Migration[6.1]
   def change
-    create_table :bookings do |t|
+    create_table :reservations do |t|
       t.string :reservation_code
       t.date :start_date
       t.date :end_date

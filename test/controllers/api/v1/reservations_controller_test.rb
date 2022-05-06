@@ -1,6 +1,6 @@
 require "test_helper"
 
-class BookingTest < ActiveSupport::TestCase
+class Api::V1::ReservationsControllerTest < ActionDispatch::IntegrationTest
   # test "the truth" do
   #   assert true
   # end

@@ -10,12 +10,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_05_06_011241) do
+ActiveRecord::Schema.define(version: 2022_05_06_145612) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
-  create_table "bookings", force: :cascade do |t|
+  create_table "guests", force: :cascade do |t|
+    t.string "email"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "reservations", force: :cascade do |t|
     t.string "reservation_code"
     t.date "start_date"
     t.date "end_date"
@@ -28,7 +34,7 @@ ActiveRecord::Schema.define(version: 2022_05_06_011241) do
     t.string "status"
     t.string "guest_first_name"
     t.string "guest_last_name"
-    t.text "guest_phone", default: [], array: true
+    t.text "guest_phone", array: true
     t.string "guest_email"
     t.string "currency"
     t.decimal "payout_price", precision: 8, scale: 2
@@ -36,6 +42,9 @@ ActiveRecord::Schema.define(version: 2022_05_06_011241) do
     t.decimal "total_price", precision: 8, scale: 2
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.bigint "guest_id", null: false
+    t.index ["guest_id"], name: "index_reservations_on_guest_id"
   end
 
+  add_foreign_key "reservations", "guests"
 end

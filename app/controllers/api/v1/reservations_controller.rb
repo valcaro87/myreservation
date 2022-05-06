@@ -1,20 +1,21 @@
-class Api::V1::BookingsController < ApplicationController
+class Api::V1::ReservationsController < ApplicationController
   skip_before_action :verify_authenticity_token
-  before_action :set_booking, only: %i[show edit update destroy]
+  before_action :set_reservation, only: %i[show edit update destroy]
+  before_action :set_guest, only: %i[create]
   before_action :check_payload, only: %i[create update]
 
   def index
-    bookings = Booking.all.order(:created_at)
-    render json: bookings, status: :ok
+    reservations = Reservation.all.order(:created_at)
+    render json: reservations, status: :ok
   end
 
 
   def show
-    #nothing here
+    render json: @reservation, status: :ok
   end
 
   def new
-    @booking = Booking.new
+    @reservation = Reservation.new
   end
 
 
@@ -23,35 +24,38 @@ class Api::V1::BookingsController < ApplicationController
   end
 
   def create
-    booking = Booking.new(booking_params.merge(check_payload))
-
-    if booking.save
-      render json: booking, status: :ok
+    reservation = @guest.reservations.new(reservation_params.merge(check_payload))
+    if Reservation.where(reservation_code: reservation.reservation_code, guest_email: @guest.email)&.size >= 1
+      render json: {status: "Reservation code and email already exist"}, status: :forbidden
     else
-      render json: booking.errors, status: :unprocessable_entity
+      if reservation.save
+        render json: reservation, status: :ok
+      else
+        render json: reservation.errors, status: :unprocessable_entity
+      end
     end
   end
 
   def update
-    if @booking.update(booking_params)
-      render json: @booking, status: :ok
+    if @reservation.update(reservation_params.merge(check_payload))
+      render json: @reservation, status: :ok
     else
-      render json: @booking.errors, status: :unprocessable_entity
+      render json: @reservation.errors, status: :unprocessable_entity
     end
   end
 
   def destroy
-    @booking.destroy
+    @reservation.destroy
   end
 
   private
 
-  def set_booking
-    @booking = booking.find(params[:id])
+  def set_reservation
+    @reservation = Reservation.find(params[:id])
   end
 
-  def booking_params
-    params.permit(:reservation_code, :start_date, :end_date, :nights, :guests, :adults, :children, :infants, :localized_description, :status, :guest_first_name, :guest_last_name, :guest_email, :currency, :payout_price, :security_price, :total_price, guest_phone: [])
+  def reservation_params
+    params.permit(:reservation_code, :start_date, :end_date, :nights, :guests, :adults, :children, :infants, :localized_description, :status, :guest_first_name, :guest_last_name, :guest_email, :currency, :payout_price, :security_price, :total_price, :guest_id, guest_phone: [])
   end
 
   def check_payload
@@ -83,6 +87,25 @@ class Api::V1::BookingsController < ApplicationController
         status: params[:reservation][:status_type],
         total_price: params[:reservation][:total_paid_amount_accurate],
       }
+    end
+  end
+
+  def set_guest
+    guest_email = if params[:guest].present?
+      params[:guest][:email].try(:downcase)
+    elsif params[:reservation][:guest_email].present?
+      params[:reservation][:guest_email].try(:downcase)
+    else
+      nil
+    end
+
+    if guest_email
+      guest = Guest.find_by_email(guest_email)
+      if guest.present?
+        @guest = guest
+      else
+        @guest = Guest.create(email: guest_email)
+      end
     end
   end
 
