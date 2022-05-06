@@ -1,0 +1,21 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  host: 127.0.0.1
+  pool: 5
+  username: mybookinguser
+  password: mybookinguser
+
+development:
+  <<: *default
+  database: "myreservation_development"
+
+test:
+  <<: *default
+  database: "myreservation_test"
+
+production:
+  <<: *default
+  database: "myreservation_production"
+  username: myreservation
+  password: <%= ENV['MYRESERVATION_DATABASE_PASSWORD'] %>
