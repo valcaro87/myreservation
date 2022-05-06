@@ -25,7 +25,7 @@ class Api::V1::ReservationsController < ApplicationController
 
   def create
     reservation = @guest.reservations.new(reservation_params.merge(check_payload))
-    if Reservation.where(reservation_code: reservation.reservation_code, guest_email: @guest.email)&.size >= 1
+    if Reservation.where(reservation_code: reservation.reservation_code)&.size >= 1
       render json: {status: "Reservation code and email already exist"}, status: :forbidden
     else
       if reservation.save
@@ -51,22 +51,15 @@ class Api::V1::ReservationsController < ApplicationController
   private
 
   def set_reservation
-    @reservation = Reservation.find(params[:id])
+    @reservation = Reservation.joins(:guest).where(id: params[:id]).first
   end
 
   def reservation_params
-    params.permit(:reservation_code, :start_date, :end_date, :nights, :guests, :adults, :children, :infants, :localized_description, :status, :guest_first_name, :guest_last_name, :guest_email, :currency, :payout_price, :security_price, :total_price, :guest_id, guest_phone: [])
+    params.require(:reservation).permit(:reservation_code, :start_date, :end_date, :nights, :guests, :adults, :children, :infants, :localized_description, :status, :currency, :payout_price, :security_price, :total_price, :guest_id)
   end
 
   def check_payload
-    if params[:reservation_code].present?
-      {
-        guest_first_name: params[:guest][:first_name],
-        guest_last_name: params[:guest][:last_name],
-        guest_email: params[:guest][:email],
-        guest_phone: params[:guest][:phone].split(','),
-      }
-    else
+    if params[:reservation].present? && params[:reservation][:code].present?
       {
         reservation_code: params[:reservation][:code],
         start_date: params[:reservation][:start_date],
@@ -77,10 +70,6 @@ class Api::V1::ReservationsController < ApplicationController
         adults: params[:reservation][:guest_details][:number_of_adults],
         children: params[:reservation][:guest_details][:number_of_children],
         infants: params[:reservation][:guest_details][:number_of_infants],
-        guest_first_name: params[:reservation][:guest_first_name],
-        guest_last_name: params[:reservation][:guest_last_name],
-        guest_email: params[:reservation][:guest_email],
-        guest_phone: params[:reservation][:guest_phone_numbers].split(','),
         currency: params[:reservation][:host_currency],
         payout_price: params[:reservation][:expected_payout_amount],
         security_price: params[:reservation][:listing_security_price_accurate],
@@ -91,6 +80,23 @@ class Api::V1::ReservationsController < ApplicationController
   end
 
   def set_guest
+    guest_profile =
+      if params[:guest].present?
+        {
+          email: params[:guest][:email],
+          first_name: params[:guest][:first_name],
+          last_name: params[:guest][:last_name],
+          phone: params[:guest][:phone].split(',').flatten,
+        }
+      elsif params[:reservation].present?
+        {
+          email: params[:reservation][:guest_email],
+          first_name: params[:reservation][:guest_first_name],
+          last_name: params[:reservation][:guest_last_name],
+          phone: params[:reservation][:guest_phone_numbers].split(',').flatten,
+        }
+      end
+
     guest_email = if params[:guest].present?
       params[:guest][:email].try(:downcase)
     elsif params[:reservation][:guest_email].present?
@@ -104,7 +110,7 @@ class Api::V1::ReservationsController < ApplicationController
       if guest.present?
         @guest = guest
       else
-        @guest = Guest.create(email: guest_email)
+        @guest = Guest.create(guest_profile)
       end
     end
   end
