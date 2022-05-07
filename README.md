@@ -13,6 +13,7 @@
 * run: *rails s*
 
 ## Endpoints:
+Test using Postman API Platform
 
 POST: http://localhost:3000/api/v1/reservations
 (refer to payload)
