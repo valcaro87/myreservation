@@ -1,9 +1,9 @@
 # INSTRUCTIONS
 
-* open terminal, clone repo: https://github.com/valcaro87/myreservation.git
+* open terminal, clone repo: *git clone https://github.com/valcaro87/myreservation.git*
 
 * change directory: *cd myreservation*
-* run: *bundle install*
+* delete file: *Gemfile.lock*, then run: *bundle install*
 
 * open file '*database.yml*' - edit/change username and password, based from your local machine
   * make sure or grant the user to access all privileges and permissions on the database(postgreSql)
