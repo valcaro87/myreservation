@@ -1,6 +1,6 @@
 class Api::V1::ReservationsController < ApplicationController
   skip_before_action :verify_authenticity_token
-  before_action :set_reservation, only: %i[show edit update destroy]
+  before_action :set_reservation, only: %i[show update destroy]
   before_action :set_guest, only: %i[create]
   before_action :check_payload, only: %i[create update]
 
@@ -11,36 +11,33 @@ class Api::V1::ReservationsController < ApplicationController
 
 
   def show
-    render json: @reservation, status: :ok
-  end
-
-  def new
-    @reservation = Reservation.new
-  end
-
-
-  def edit
-    #nothing here
+    if @reservation.present?
+      render json: @reservation, serializer: ReservationSerializer
+    else
+      render json: {status: "Reservation does not exist"}, status: :forbidden
+    end
   end
 
   def create
     reservation = @guest.reservations.new(reservation_params.merge(check_payload))
     if Reservation.where(reservation_code: reservation.reservation_code)&.size >= 1
-      render json: {status: "Reservation code and email already exist"}, status: :forbidden
+      render json: {status: "Reservation already exist"}, status: :forbidden
     else
-      if reservation.save
-        render json: reservation, status: :ok
+      if reservation.present? && reservation.save
+        render json: reservation
       else
-        render json: reservation.errors, status: :unprocessable_entity
+        render json: {status: "unable to create reservation"}, status: :unprocessable_entity
       end
     end
   end
 
   def update
-    if @reservation.update(reservation_params.merge(check_payload))
+    if @reservation && @reservation.update(reservation_params.merge(check_payload))
       render json: @reservation, status: :ok
+    elsif @reservation.blank? || @reservation.nil?
+      render json: {status: "Reservation does not exist"}, status: :forbidden
     else
-      render json: @reservation.errors, status: :unprocessable_entity
+      render json: {status: "unable to update reservation"}, status: :unprocessable_entity
     end
   end
 
@@ -51,7 +48,7 @@ class Api::V1::ReservationsController < ApplicationController
   private
 
   def set_reservation
-    @reservation = Reservation.joins(:guest).where(id: params[:id]).first
+    @reservation = Reservation.find_by_id(params[:id])
   end
 
   def reservation_params
@@ -112,6 +109,8 @@ class Api::V1::ReservationsController < ApplicationController
       else
         @guest = Guest.create(guest_profile)
       end
+    else
+      false
     end
   end
 
