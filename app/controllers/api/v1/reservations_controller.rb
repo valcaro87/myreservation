@@ -1,6 +1,6 @@
 class Api::V1::ReservationsController < ApplicationController
   skip_before_action :verify_authenticity_token
-  before_action :set_reservation, only: %i[show edit update destroy]
+  before_action :set_reservation, only: %i[show update destroy]
   before_action :set_guest, only: %i[create]
   before_action :check_payload, only: %i[create update]
 
@@ -11,16 +11,7 @@ class Api::V1::ReservationsController < ApplicationController
 
 
   def show
-    render json: @reservation, status: :ok
-  end
-
-  def new
-    @reservation = Reservation.new
-  end
-
-
-  def edit
-    #nothing here
+    render json: @reservation, serializer: ReservationSerializer
   end
 
   def create
@@ -29,7 +20,7 @@ class Api::V1::ReservationsController < ApplicationController
       render json: {status: "Reservation code and email already exist"}, status: :forbidden
     else
       if reservation.save
-        render json: reservation, status: :ok
+        render json: reservation
       else
         render json: reservation.errors, status: :unprocessable_entity
       end
@@ -51,7 +42,7 @@ class Api::V1::ReservationsController < ApplicationController
   private
 
   def set_reservation
-    @reservation = Reservation.joins(:guest).where(id: params[:id]).first
+    @reservation = Reservation.find(params[:id])
   end
 
   def reservation_params
