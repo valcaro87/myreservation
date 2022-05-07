@@ -42,7 +42,11 @@ class Api::V1::ReservationsController < ApplicationController
   end
 
   def destroy
-    @reservation.destroy
+    if @reservation && @reservation.destroy
+      render json: {status: "Reservation succesfully deleted"}, status: :ok
+    else
+      render json: {status: "unable to delete reservation"}, status: :forbidden
+    end
   end
 
   private
