@@ -17,7 +17,7 @@ class Api::V1::ReservationsController < ApplicationController
   def create
     reservation = @guest.reservations.new(reservation_params.merge(check_payload))
     if Reservation.where(reservation_code: reservation.reservation_code)&.size >= 1
-      render json: {status: "Reservation code and email already exist"}, status: :forbidden
+      render json: {status: "Reservation already exist"}, status: :forbidden
     else
       if reservation.save
         render json: reservation
@@ -28,10 +28,10 @@ class Api::V1::ReservationsController < ApplicationController
   end
 
   def update
-    if @reservation.update(reservation_params.merge(check_payload))
+    if @reservation && @reservation.update(reservation_params.merge(check_payload))
       render json: @reservation, status: :ok
     else
-      render json: @reservation.errors, status: :unprocessable_entity
+      render json: {status: "unable to update reservation"}, status: :unprocessable_entity
     end
   end
 
@@ -42,7 +42,7 @@ class Api::V1::ReservationsController < ApplicationController
   private
 
   def set_reservation
-    @reservation = Reservation.find(params[:id])
+    @reservation = Reservation.find_by_id(params[:id])
   end
 
   def reservation_params
