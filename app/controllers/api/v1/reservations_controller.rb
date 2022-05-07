@@ -11,7 +11,11 @@ class Api::V1::ReservationsController < ApplicationController
 
 
   def show
-    render json: @reservation, serializer: ReservationSerializer
+    if @reservation.present?
+      render json: @reservation, serializer: ReservationSerializer
+    else
+      render json: {status: "Reservation does not exist"}, status: :forbidden
+    end
   end
 
   def create
@@ -19,10 +23,10 @@ class Api::V1::ReservationsController < ApplicationController
     if Reservation.where(reservation_code: reservation.reservation_code)&.size >= 1
       render json: {status: "Reservation already exist"}, status: :forbidden
     else
-      if reservation.save
+      if reservation.present? && reservation.save
         render json: reservation
       else
-        render json: reservation.errors, status: :unprocessable_entity
+        render json: {status: "unable to create reservation"}, status: :unprocessable_entity
       end
     end
   end
@@ -30,6 +34,8 @@ class Api::V1::ReservationsController < ApplicationController
   def update
     if @reservation && @reservation.update(reservation_params.merge(check_payload))
       render json: @reservation, status: :ok
+    elsif @reservation.blank? || @reservation.nil?
+      render json: {status: "Reservation does not exist"}, status: :forbidden
     else
       render json: {status: "unable to update reservation"}, status: :unprocessable_entity
     end
@@ -103,6 +109,8 @@ class Api::V1::ReservationsController < ApplicationController
       else
         @guest = Guest.create(guest_profile)
       end
+    else
+      false
     end
   end
 
