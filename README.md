@@ -16,11 +16,13 @@
 
 POST: http://localhost:3000/api/v1/reservations
 (refer to payload)
+* *send post data via body raw JSON format*
 
 GET: http://localhost:3000/api/v1/reservations/id
 
 UPDATE/PATCH: http://localhost:3000/api/v1/reservations/id
 (refer to payload)
+* *send patch data via body raw JSON format*
 
 
 DELETE: http://localhost:3000/api/v1/reservations/id
